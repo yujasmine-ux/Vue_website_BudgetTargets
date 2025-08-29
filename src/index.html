@@ -251,7 +251,7 @@
             errorMsg.classList.add('hidden');
             try {
                 // 從 Google Apps Script 獲取資料
-                const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf7-CI3Ka4RFnDjyIFpT12vaW1zIRC5i31t_YLMnDa8zvWEO0LsmprnU6QiQdmmAJT/exec';
+                const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvLZpC3MDrwBh4ehfeUE66MWLXAZN7ivkIX-btrnixcy6a0DCwYBNaW9aHKTT4l0eNFQ/exec';
                 const response = await fetch(SCRIPT_URL, { method: 'GET' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
