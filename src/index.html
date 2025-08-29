@@ -50,14 +50,14 @@
 
     <div id="app" class="w-full max-w-4xl space-y-8">
 
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">JAKE-門市預算資料</h1>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">JAKE-門市預算資料同步中心</h1>
 
         <section class="card">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">檔案上傳同步 (CSV/Excel)</h2>
             <div class="flex flex-col sm:flex-row items-center gap-4">
                 <input type="file" id="fileInput" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"/>
                 <button id="uploadFileBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-colors duration-200 w-full sm:w-auto">
-                    上傳並同步
+                    上傳檔案並同步
                 </button>
             </div>
             <p id="file-status" class="text-sm mt-4 text-center"></p>
@@ -251,7 +251,7 @@
             errorMsg.classList.add('hidden');
             try {
                 // 從 Google Apps Script 獲取資料
-                const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf7-CI3Ka4RFnDjyIFpT12vaW1zIRC5i31t_YLMnDa8zvWEO0LsmprnU6QiQdmmAJT/exec';
+                const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztMSkWEzXehHGOlqjNmScthaXuiPY927gpk8UfUzsoL_sHwJYPpJSw25UOYnigyu5ZpQ/exec';
                 const response = await fetch(SCRIPT_URL, { method: 'GET' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -345,3 +345,4 @@
     </script>
 </body>
 </html>
+```
