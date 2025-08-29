@@ -50,17 +50,24 @@
 
     <div id="app" class="w-full max-w-4xl space-y-8">
 
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">資料同步中心</h1>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">JAKE-門市預算資料上傳</h1>
 
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">門市預算資料同步中心</h1>
+        <section class="card">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">檔案上傳同步 (CSV/Excel)</h2>
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <input type="file" id="fileInput" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"/>
+                <button id="uploadFileBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-colors duration-200 w-full sm:w-auto">
+                    上傳並同步
+                </button>
+            </div>
+            <p id="file-status" class="text-sm mt-4 text-center"></p>
+        </section>
 
 
-        <!-- 手動輸入資料區塊 -->
         <section class="card">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">手動輸入資料</h2>
             <div id="manual-data-container" class="space-y-4">
-                <!-- 動態新增的輸入欄位將在這裡 -->
-            </div>
+                </div>
             <div class="flex flex-col sm:flex-row gap-4 mt-6">
                 <button id="addItemBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-md transition-colors duration-200">
                     新增一筆
@@ -72,7 +79,6 @@
             <p id="manual-status" class="text-sm mt-4 text-center"></p>
         </section>
 
-        <!-- 試算表內容顯示區塊 -->
         <section class="card">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">預算表內容</h2>
             <div class="flex justify-center mb-4">
@@ -104,8 +110,7 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
-                        <!-- 資料將在此處動態載入 -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
             <p id="errorMsg" class="text-center text-red-500 hidden mt-4"></p>
@@ -113,17 +118,18 @@
     </div>
 
     <script>
-        // 請將此處替換為您的 Apps Script URL (請使用 exec 結尾的網址)
-        // 為了同時支援 GET 和 POST，您的 Apps Script 需要同時有 doGet 和 doPost 函式
-
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf7-CI3Ka4RFnDjyIFpT12vaW1zIRC5i31t_YLMnDa8zvWEO0LsmprnU6QiQdmmAJgTg/exec'; 
-
+        // 請將此處替換為您的 FastAPI 伺服器 URL
+        const API_BASE_URL = 'https://vue-fastapi-budgettargets.onrender.com';
 
         // DOM 元素引用
         const manualDataContainer = document.getElementById('manual-data-container');
         const addItemBtn = document.getElementById('addItemBtn');
         const submitManualBtn = document.getElementById('submitManualBtn');
         const manualStatus = document.getElementById('manual-status');
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
+        const fileStatus = document.getElementById('file-status');
 
         const refreshBtn = document.getElementById('refreshBtn');
         const loadingDiv = document.getElementById('loading');
@@ -133,6 +139,8 @@
         let manualData = [];
 
         // 功能函式
+
+        // 手動同步
         function addItem() {
             const newItem = {
                 store_name: '', 
@@ -155,10 +163,10 @@
                 const rowDiv = document.createElement('div');
                 rowDiv.className = 'data-row';
                 rowDiv.innerHTML = `
-                    <input type="text" placeholder="門市名稱" value="${item.store_name}" data-key="store_name" data-index="${index}">
-                    <input type="number" placeholder="年份" value="${item.year}" data-key="year" data-index="${index}">
-                    <input type="number" placeholder="月份" value="${item.month}" data-key="month" data-index="${index}">
-                    <input type="number" placeholder="金額" value="${item.amount || ''}" data-key="amount" data-index="${index}">
+                    <input type="text" placeholder="門市名稱" value="${item.store_name}" data-key="store_name" data-index="${index}" class="flex-1">
+                    <input type="number" placeholder="年份" value="${item.year}" data-key="year" data-index="${index}" class="flex-1">
+                    <input type="number" placeholder="月份" value="${item.month}" data-key="month" data-index="${index}" class="flex-1">
+                    <input type="number" placeholder="金額" value="${item.amount || ''}" data-key="amount" data-index="${index}" class="flex-1">
                     <button class="remove-btn bg-red-500 hover:bg-red-600 text-white font-semibold">移除</button>
                 `;
                 manualDataContainer.appendChild(rowDiv);
@@ -180,19 +188,20 @@
             }
 
             try {
-                const response = await fetch(SCRIPT_URL, {
+                const response = await fetch(`${API_BASE_URL}/api/manual-sync`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: JSON.stringify(filteredData) })
+                    body: JSON.stringify(filteredData)
                 });
                 
                 const result = await response.json();
-                if (result.status === 'success') {
-                    manualStatus.textContent = `同步成功！訊息：${result.message}`;
+                if (response.ok) {
+                    manualStatus.textContent = `同步成功！訊息：${result.message || '資料已成功同步。'}`;
                     manualStatus.className = 'text-sm mt-4 text-center text-green-500';
-                    fetchData(); // 成功後自動更新表格
+                    manualData = [];
+                    addItem();
                 } else {
-                    throw new Error(result.message);
+                    throw new Error(result.detail || '伺服器錯誤。');
                 }
             } catch (error) {
                 manualStatus.textContent = `同步失敗：${error.message}`;
@@ -200,10 +209,49 @@
             }
         }
 
+        // 檔案上傳
+        async function uploadFile() {
+            fileStatus.textContent = '正在上傳並同步...';
+            fileStatus.className = 'text-sm mt-4 text-center text-gray-500';
+
+            const file = fileInput.files[0];
+            if (!file) {
+                fileStatus.textContent = "請選擇一個檔案。";
+                fileStatus.className = 'text-sm mt-4 text-center text-red-500';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/upload-file`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    fileStatus.textContent = `同步成功！訊息：${result.message || '檔案已成功同步。'}`;
+                    fileStatus.className = 'text-sm mt-4 text-center text-green-500';
+                    fileInput.value = ''; // 清空檔案輸入框
+                } else {
+                    throw new Error(result.detail || '伺服器錯誤。');
+                }
+            } catch (error) {
+                fileStatus.textContent = `同步失敗：${error.message}`;
+                fileStatus.className = 'text-sm mt-4 text-center text-red-500';
+            }
+        }
+        
+
+        // 試算表資料顯示
         async function fetchData() {
             showLoading();
             errorMsg.classList.add('hidden');
             try {
+                // 從 Google Apps Script 獲取資料
+                const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf7-CI3Ka4RFnDjyIFpT12vaW1zIRC5i31t_YLMnDa8zvWEO0LsmprnU6QiQdmmAJT/exec';
                 const response = await fetch(SCRIPT_URL, { method: 'GET' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -244,6 +292,7 @@
             refreshBtn.disabled = true;
             submitManualBtn.disabled = true;
             addItemBtn.disabled = true;
+            uploadFileBtn.disabled = true;
         }
 
         function hideLoading() {
@@ -251,6 +300,7 @@
             refreshBtn.disabled = false;
             submitManualBtn.disabled = false;
             addItemBtn.disabled = false;
+            uploadFileBtn.disabled = false;
         }
 
         function displayError(message) {
@@ -263,6 +313,7 @@
         addItemBtn.addEventListener('click', addItem);
         submitManualBtn.addEventListener('click', submitManualData);
         refreshBtn.addEventListener('click', fetchData);
+        uploadFileBtn.addEventListener('click', uploadFile);
 
         manualDataContainer.addEventListener('input', (event) => {
             const input = event.target;
